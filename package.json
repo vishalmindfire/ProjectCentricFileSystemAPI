@@ -56,10 +56,5 @@
     "*.{json,yml,yaml,md}": [
       "prettier --check"
     ]
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
   }
 }
