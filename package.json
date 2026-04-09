@@ -32,12 +32,14 @@
   },
   "homepage": "https://github.com/vishalmindfire/ProjectCentricFileSystemAPI#readme",
   "dependencies": {
+    "cors": "^2.8.6",
     "express": "^5.2.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@jest/globals": "^30.3.0",
     "@tsconfig/node22": "^22.0.5",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.5.2",

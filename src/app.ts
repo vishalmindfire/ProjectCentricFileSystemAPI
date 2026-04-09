@@ -1,7 +1,10 @@
+import { corsMiddleware } from '#middleware/cors.js';
 import express from 'express';
+
 const app = express();
 const port = '3000';
 
+app.use(corsMiddleware);
 app.get('/', (req, res) => {
   res.send('Hello World!');
   console.log('Response sent');
