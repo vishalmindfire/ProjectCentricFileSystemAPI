@@ -11,12 +11,14 @@ const COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 
 export async function login(req: Request, res: Response): Promise<void> {
   const { email, password } = req.body as { email: string; password: string };
+  console.log(email);
   if (!email || !password) {
     res.status(400).json({ message: 'email and password are required' });
     return;
   }
 
   const user = await findUserByEmail(email);
+  console.log(user);
   if (!user) {
     res.status(401).json({ message: 'Invalid credentials' });
     return;
