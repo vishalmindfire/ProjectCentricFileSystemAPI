@@ -1,12 +1,5 @@
+import getEnv from '#utils/checkEnvVariables.js';
 import { Pool } from 'pg';
-
-function getEnv(key: string): string {
-  const value = process.env[key];
-  if (!value) {
-    throw new Error(`Missing environment variable: ${key}`);
-  }
-  return value;
-}
 
 const pool: Pool = new Pool({
   database: getEnv('DB_NAME'),
