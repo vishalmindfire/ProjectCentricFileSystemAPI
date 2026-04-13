@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import fs from 'fs';
 import multer from 'multer';
 import path from 'path';
@@ -17,7 +16,7 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: (_req, file, cb) => {
-    cb(null, crypto.randomUUID() + path.extname(file.originalname));
+    cb(null, file.originalname);
   },
 });
 
