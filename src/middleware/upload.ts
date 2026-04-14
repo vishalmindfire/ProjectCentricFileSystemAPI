@@ -1,12 +1,8 @@
 import fs from 'fs';
 import multer from 'multer';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __currentFileName = fileURLToPath(import.meta.url);
-const __rootDirname = path.join(path.dirname(__currentFileName), '..');
-
-const uploadDir = path.join(__rootDirname, 'uploads');
+const uploadDir = path.join(process.cwd(), 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }

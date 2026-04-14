@@ -40,7 +40,7 @@ export async function create(req: Request, res: Response): Promise<void> {
   const job = await createJob(projectId);
   await updateJobStatus(job.id, 'PROCESSING');
 
-  const workerPath = new URL('../workers/zipWorker.js', import.meta.url).pathname;
+  const workerPath = path.resolve(process.cwd(), 'dist/workers/zipWorker.js');
 
   const worker = new Worker(workerPath, {
     workerData: {

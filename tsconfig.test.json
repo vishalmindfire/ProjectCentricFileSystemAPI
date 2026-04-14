@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "nodeNext",
+    "moduleResolution": "node",
+    "paths": {
+      "#app.js": ["./src/app.ts"],
+      "#config/*": ["./src/config/*"],
+      "#controllers/*": ["./src/controllers/*"],
+      "#middleware/*": ["./src/middleware/*"],
+      "#models/*": ["./src/models/*"],
+      "#routes/*": ["./src/routes/*"],
+      "#utils/*": ["./src/utils/*"],
+      "#workers/*": ["./src/workers/*"]
+    }
+  }
+}
