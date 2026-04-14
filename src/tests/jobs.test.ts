@@ -5,6 +5,10 @@ import fs from 'fs';
 import path from 'path';
 import request from 'supertest';
 
+const ZIPS_DIR = path.resolve(__dirname, 'zips');
+console.log(ZIPS_DIR);
+fs.mkdirSync(ZIPS_DIR, { recursive: true });
+
 jest.mock('#models/jobModel.js', () => ({
   createJob: jest.fn(),
   findJobById: jest.fn(),
@@ -26,7 +30,6 @@ jest.mock('worker_threads', () => ({
 jest.mock('fs', () => ({
   ...jest.requireActual<typeof import('fs')>('fs'),
   existsSync: jest.fn().mockReturnValue(true),
-  mkdirSync: jest.fn(),
 }));
 jest.mock('jsonwebtoken', () => ({
   sign: jest.fn(),
@@ -77,7 +80,6 @@ const mockJob2: Job = {
 };
 
 const AUTH_COOKIE = 'access_token=valid-token';
-const ZIPS_DIR = path.resolve(__dirname, 'zips');
 
 describe('Jobs endpoints', () => {
   let app: Express;
