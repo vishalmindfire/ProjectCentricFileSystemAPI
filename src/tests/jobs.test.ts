@@ -2,7 +2,6 @@ import type { Express } from 'express';
 
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
 import request from 'supertest';
 
@@ -78,6 +77,7 @@ const mockJob2: Job = {
 };
 
 const AUTH_COOKIE = 'access_token=valid-token';
+const ZIPS_DIR = path.resolve(__dirname, 'zips');
 
 describe('Jobs endpoints', () => {
   let app: Express;
@@ -260,11 +260,11 @@ describe('Jobs endpoints', () => {
     });
 
     it('job completed and zip exists then return file download', async () => {
-      const tmpZip = path.join(os.tmpdir(), 'job-1-2.zip');
-      fs.writeFileSync(tmpZip, 'zip content');
-      mockFindJobById.mockResolvedValueOnce({ ...mockJob2, zip_path: tmpZip });
+      const zipPath = path.join(ZIPS_DIR, 'job-1-2.zip');
+      fs.writeFileSync(zipPath, 'zip content');
+      mockFindJobById.mockResolvedValueOnce({ ...mockJob2, zip_path: zipPath });
       const res = await request(app).get('/projects/1/jobs/2/download').set('Cookie', AUTH_COOKIE);
-      fs.unlinkSync(tmpZip);
+      fs.unlinkSync(zipPath);
       expect(res.status).toBe(200);
       expect(res.headers['content-disposition']).toContain('job-1-2.zip');
     });
