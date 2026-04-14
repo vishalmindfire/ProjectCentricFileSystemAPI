@@ -3,10 +3,14 @@ import type { Request, Response } from 'express';
 
 import { checkFilesExist } from '#controllers/fileController.js';
 import { createJob, findJobById, getJobsByProject, updateJobProgress, updateJobStatus } from '#models/jobModel.js';
+import fs from 'fs';
 import path from 'path';
 import { Worker } from 'worker_threads';
 
-const outputDir = 'uploads/zips';
+const outputDir = path.resolve(process.cwd(), 'zips');
+if (!fs.existsSync(outputDir)) {
+  fs.mkdirSync(outputDir, { recursive: true });
+}
 
 export async function create(req: Request, res: Response): Promise<void> {
   const projectId = Number(req.params.projectId);
@@ -39,10 +43,12 @@ export async function create(req: Request, res: Response): Promise<void> {
 
   const job = await createJob(projectId);
   await updateJobStatus(job.id, 'PROCESSING');
-
-  const workerPath = path.resolve(process.cwd(), 'dist/workers/zipWorker.js');
+  const isDev = process.env.NODE_ENV !== 'production';
+  const workerLocation = isDev ? 'src/workers/zipWorker.ts' : 'dist/workers/zipWorker.js';
+  const workerPath = path.resolve(process.cwd(), workerLocation);
 
   const worker = new Worker(workerPath, {
+    execArgv: isDev ? ['--import', 'tsx'] : [],
     workerData: {
       files: existing_files.map((f: FileDetail) => ({ name: f.name, storage_path: f.storage_path })),
       jobId: job.id,
@@ -63,7 +69,8 @@ export async function create(req: Request, res: Response): Promise<void> {
     }
   });
 
-  worker.on('error', () => {
+  worker.on('error', (error) => {
+    console.log(error);
     void updateJobStatus(job.id, 'FAILED');
   });
 

@@ -17,7 +17,7 @@ export type JobStatus = 'COMPLETED' | 'FAILED' | 'PENDING' | 'PROCESSING';
 export async function createJob(project_id: number): Promise<Job> {
   const result: QueryResult<Job> = await pool.query(
     `INSERT INTO jobs (project_id, status)
-     VALUES ($1, 'pending')
+     VALUES ($1, 'PENDING')
      RETURNING *`,
     [project_id]
   );
