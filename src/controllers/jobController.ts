@@ -15,11 +15,11 @@ export async function create(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const { fileIds } = req.body as { fileIds: number[] };
+  const { fileIds } = req.body as { fileIds: number[] | undefined };
   const { ignore } = req.body as { ignore: boolean | undefined };
   const selectedFileIds = fileIds;
   if (!Array.isArray(selectedFileIds) || selectedFileIds.length === 0) {
-    res.status(400).json({ message: 'selectFiles must be a non-empty array of file ids' });
+    res.status(400).json({ message: 'No files selected for the job' });
     return;
   }
 
