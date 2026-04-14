@@ -3,6 +3,7 @@ import httpsOptions from '#config/httpsConfig.js';
 import { corsMiddleware } from '#middleware/cors.js';
 import authRoutes from '#routes/authRoutes.js';
 import fileRoutes from '#routes/fileRoutes.js';
+import jobRoutes from '#routes/jobRoutes.js';
 import projectRoutes from '#routes/projectRoutes.js';
 import cookieParser from 'cookie-parser';
 import express from 'express';
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use('/auth', authRoutes);
 app.use('/projects', projectRoutes);
 app.use('/projects/:projectId/files', fileRoutes);
+app.use('/projects/:projectId/jobs', jobRoutes);
 try {
   console.log('connecting to db');
   const client = await pool.connect();

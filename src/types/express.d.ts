@@ -12,7 +12,9 @@ declare global {
     }
 
     interface Request {
+      fileIds?: number[];
       files?: Express.MulterFile[];
+      ignore?: boolean;
       user?: { email: string; id: number };
     }
   }

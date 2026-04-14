@@ -3,6 +3,36 @@ import type { Request, Response } from 'express';
 import { createFile, deleteFile, findFileById, getFilesByProject } from '#models/fileModel.js';
 import fs from 'fs/promises';
 
+export interface FileDetail {
+  created_at?: Date;
+  id: number;
+  is_missing: boolean;
+  mime_type?: string;
+  name?: string;
+  project_id?: number;
+  size?: number;
+  storage_path?: string;
+}
+
+export async function checkFilesExist(fileIds: number[]): Promise<{ existing_files: FileDetail[]; missing_files: FileDetail[] }> {
+  const results = await Promise.all(
+    fileIds.map(async (id) => {
+      const file = await findFileById(id);
+      if (!file) return { id, is_missing: true };
+      try {
+        await fs.access(file.storage_path);
+        return { ...file, is_missing: false };
+      } catch {
+        return { id, is_missing: true };
+      }
+    })
+  );
+  return {
+    existing_files: results.filter((f) => !f.is_missing),
+    missing_files: results.filter((f) => f.is_missing),
+  };
+}
+
 export async function getByProject(req: Request, res: Response): Promise<void> {
   const projectId = Number(req.params.projectId);
   if (isNaN(projectId)) {
@@ -55,7 +85,7 @@ export async function upload(req: Request, res: Response): Promise<void> {
   }
 
   const created = await Promise.all(
-    files.map((f) =>
+    files.map((f: Express.MulterFile) =>
       createFile({
         mime_type: f.mimetype,
         name: f.originalname,

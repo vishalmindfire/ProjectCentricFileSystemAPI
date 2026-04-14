@@ -4,6 +4,6 @@
     "outDir": "./dist",
     "rootDir": "./"
   },
-  "include": ["**/*.ts"],
+  "include": ["**/*.ts", "/types/express.d.ts"],
   "exclude": ["dist"]
 }
