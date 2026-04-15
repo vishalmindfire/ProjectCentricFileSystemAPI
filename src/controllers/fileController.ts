@@ -36,32 +36,32 @@ export async function checkFilesExist(fileIds: number[]): Promise<{ existing_fil
 export async function getByProject(req: Request, res: Response): Promise<void> {
   const projectId = Number(req.params.projectId);
   if (isNaN(projectId)) {
-    res.status(400).json({ message: 'Invalid project id' });
+    res.status(400).json({ message: 'Invalid project id', success: false });
     return;
   }
   const files = await getFilesByProject(projectId);
-  res.json(files);
+  res.json({ files: files, success: true });
 }
 
 export async function remove(req: Request, res: Response): Promise<void> {
   const projectId = Number(req.params.projectId);
   const id = Number(req.params.id);
   if (isNaN(projectId)) {
-    res.status(400).json({ message: 'Invalid project id' });
+    res.status(400).json({ message: 'Invalid project id', success: false });
     return;
   }
   if (isNaN(id)) {
-    res.status(400).json({ message: 'Invalid file id' });
+    res.status(400).json({ message: 'Invalid file id', success: false });
     return;
   }
 
   const file = await findFileById(id);
   if (!file) {
-    res.status(404).json({ message: 'File not found' });
+    res.status(404).json({ message: 'File not found', success: false });
     return;
   }
   if (file.project_id !== projectId) {
-    res.status(404).json({ message: 'File is not accessible' });
+    res.status(404).json({ message: 'File is not accessible', success: false });
     return;
   }
 
@@ -73,14 +73,14 @@ export async function remove(req: Request, res: Response): Promise<void> {
 export async function upload(req: Request, res: Response): Promise<void> {
   const projectId = Number(req.params.projectId);
   if (isNaN(projectId)) {
-    res.status(400).json({ message: 'Invalid project id' });
+    res.status(400).json({ message: 'Invalid project id', success: false });
     return;
   }
 
   const files = req.files as Express.MulterFile[] | undefined;
 
   if (!files || files.length === 0) {
-    res.status(400).json({ message: 'No files provided' });
+    res.status(400).json({ message: 'No files provided', success: false });
     return;
   }
 
@@ -96,5 +96,5 @@ export async function upload(req: Request, res: Response): Promise<void> {
     )
   );
 
-  res.status(201).json(created);
+  res.status(201).json({ files: created, success: true });
 }

@@ -98,23 +98,24 @@ describe('Files endpoints', () => {
     it('invalid project id then return 400 status', async () => {
       const res = await request(app).get('/projects/abc/files').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(400);
-      expect(res.body).toMatchObject({ message: 'Invalid project id' });
+      expect(res.body).toMatchObject({ message: 'Invalid project id', success: false });
     });
 
     it('returns all files for project with 200 status', async () => {
       mockGetFilesByProject.mockResolvedValueOnce([mockFile, mockFile2]);
       const res = await request(app).get('/projects/1/files').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(200);
-      expect(res.body).toHaveLength(2);
-      expect((res.body as ProjectFile[])[0]).toMatchObject({ id: 1, name: 'test.txt', project_id: 1 });
-      expect((res.body as ProjectFile[])[1]).toMatchObject({ id: 2, name: 'report.pdf', project_id: 1 });
+      expect((res.body as { files: ProjectFile[]; success: boolean }).files).toHaveLength(2);
+      expect((res.body as { files: ProjectFile[]; success: boolean }).success).toBe(true);
+      expect((res.body as { files: ProjectFile[]; success: boolean }).files[0]).toMatchObject({ id: 1, name: 'test.txt', project_id: 1 });
+      expect((res.body as { files: ProjectFile[]; success: boolean }).files[1]).toMatchObject({ id: 2, name: 'report.pdf', project_id: 1 });
     });
 
     it('no files exist then return empty array and 200 status', async () => {
       mockGetFilesByProject.mockResolvedValueOnce([]);
       const res = await request(app).get('/projects/1/files').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(200);
-      expect(res.body).toEqual([]);
+      expect(res.body as { files: ProjectFile[]; success: boolean }).toEqual({ files: [], success: true });
     });
   });
 
@@ -127,13 +128,13 @@ describe('Files endpoints', () => {
     it('invalid project id then return 400 status', async () => {
       const res = await request(app).post('/projects/abc/files').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(400);
-      expect(res.body).toMatchObject({ message: 'Invalid project id' });
+      expect(res.body).toMatchObject({ message: 'Invalid project id', success: false });
     });
 
     it('no files provided then return 400 status', async () => {
       const res = await request(app).post('/projects/1/files').set('Cookie', AUTH_COOKIE).send({});
       expect(res.status).toBe(400);
-      expect(res.body).toMatchObject({ message: 'No files provided' });
+      expect(res.body).toMatchObject({ message: 'No files provided', success: false });
     });
 
     it('uploads files and returns 201 with created file data', async () => {
@@ -144,9 +145,10 @@ describe('Files endpoints', () => {
         .attach('files', Buffer.from('file content'), { contentType: 'text/plain', filename: 'test.txt' })
         .attach('files', Buffer.from('file content'), { contentType: 'application/pdf', filename: 'report.pdf' });
       expect(res.status).toBe(201);
-      expect(res.body).toHaveLength(2);
-      expect((res.body as ProjectFile[])[0]).toMatchObject({ id: 1, name: 'test.txt', project_id: 1 });
-      expect((res.body as ProjectFile[])[1]).toMatchObject({ id: 2, name: 'report.pdf', project_id: 1 });
+      expect((res.body as { files: ProjectFile[]; success: boolean }).success).toBe(true);
+      expect((res.body as { files: ProjectFile[]; success: boolean }).files).toHaveLength(2);
+      expect((res.body as { files: ProjectFile[]; success: boolean }).files[0]).toMatchObject({ id: 1, name: 'test.txt', project_id: 1 });
+      expect((res.body as { files: ProjectFile[]; success: boolean }).files[1]).toMatchObject({ id: 2, name: 'report.pdf', project_id: 1 });
     });
   });
 
@@ -159,27 +161,27 @@ describe('Files endpoints', () => {
     it('invalid project id then return 400 status', async () => {
       const res = await request(app).delete('/projects/abc/files/1').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(400);
-      expect(res.body).toMatchObject({ message: 'Invalid project id' });
+      expect(res.body).toMatchObject({ message: 'Invalid project id', success: false });
     });
 
     it('invalid file id then return 400 status', async () => {
       const res = await request(app).delete('/projects/1/files/abc').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(400);
-      expect(res.body).toMatchObject({ message: 'Invalid file id' });
+      expect(res.body).toMatchObject({ message: 'Invalid file id', success: false });
     });
 
     it('file not found then return 404 status', async () => {
       mockFindFileById.mockResolvedValueOnce(null);
       const res = await request(app).delete('/projects/1/files/99').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(404);
-      expect(res.body).toMatchObject({ message: 'File not found' });
+      expect(res.body).toMatchObject({ message: 'File not found', success: false });
     });
 
     it('file belongs to different project then return 404 status', async () => {
       mockFindFileById.mockResolvedValueOnce({ ...mockFile, project_id: 2 });
       const res = await request(app).delete('/projects/1/files/1').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(404);
-      expect(res.body).toMatchObject({ message: 'File is not accessible' });
+      expect(res.body).toMatchObject({ message: 'File is not accessible', success: false });
     });
 
     it('deletes file and returns 204 status', async () => {
