@@ -15,30 +15,30 @@ if (!fs.existsSync(outputDir)) {
 export async function create(req: Request, res: Response): Promise<void> {
   const projectId = Number(req.params.projectId);
   if (isNaN(projectId)) {
-    res.status(400).json({ message: 'Invalid project id' });
+    res.status(400).json({ message: 'Invalid project id', success: false });
     return;
   }
 
   const { fileIds } = req.body as { fileIds: number[] | undefined };
-  const { ignore } = req.body as { ignore: boolean | undefined };
+  const { ignoreMissing } = req.body as { ignoreMissing: boolean | undefined };
   const selectedFileIds = fileIds;
   if (!Array.isArray(selectedFileIds) || selectedFileIds.length === 0) {
-    res.status(400).json({ message: 'No files selected for the job' });
+    res.status(400).json({ message: 'No files selected for the job', success: false });
     return;
   }
 
   const { existing_files, missing_files } = await checkFilesExist(selectedFileIds);
 
-  if (!ignore) {
-    if (missing_files.length > 0) {
-      res.status(400).json({ message: 'Some files are missing', missing_files });
-      return;
-    }
+  if (existing_files.length === 0) {
+    res.status(400).json({ message: 'No files to zip', success: false });
+    return;
   }
 
-  if (existing_files.length === 0) {
-    res.status(400).json({ message: 'No files to zip' });
-    return;
+  if (!ignoreMissing) {
+    if (missing_files.length > 0) {
+      res.status(200).json({ message: 'Some files are missing', missing_files, success: false });
+      return;
+    }
   }
 
   const job = await createJob(projectId);
@@ -73,24 +73,23 @@ export async function create(req: Request, res: Response): Promise<void> {
     console.log(error);
     void updateJobStatus(job.id, 'FAILED');
   });
-
-  res.status(202).json(job);
+  res.status(202).json({ job: job, success: true });
 }
 
 export async function download(req: Request, res: Response): Promise<void> {
   const id = Number(req.params.id);
   if (isNaN(id)) {
-    res.status(400).json({ message: 'Invalid job id' });
+    res.status(400).json({ message: 'Invalid job id', success: false });
     return;
   }
 
   const job = await findJobById(id);
   if (!job) {
-    res.status(404).json({ message: 'Job not found' });
+    res.status(404).json({ message: 'Job not found', success: false });
     return;
   }
   if (job.status !== 'COMPLETED' || !job.zip_path) {
-    res.status(400).json({ message: 'Job is not completed yet' });
+    res.status(400).json({ message: 'Job is not completed yet', success: false });
     return;
   }
 
@@ -101,26 +100,26 @@ export async function download(req: Request, res: Response): Promise<void> {
 export async function getById(req: Request, res: Response): Promise<void> {
   const id = Number(req.params.id);
   if (isNaN(id)) {
-    res.status(400).json({ message: 'Invalid job id' });
+    res.status(400).json({ message: 'Invalid job id', success: false });
     return;
   }
 
   const job = await findJobById(id);
   if (!job) {
-    res.status(404).json({ message: 'Job not found' });
+    res.status(404).json({ message: 'Job not found', success: false });
     return;
   }
 
-  res.json(job);
+  res.json({ job: job, success: true });
 }
 
 export async function getByProject(req: Request, res: Response): Promise<void> {
   const projectId = Number(req.params.projectId);
   if (isNaN(projectId)) {
-    res.status(400).json({ message: 'Invalid project id' });
+    res.status(400).json({ message: 'Invalid project id', success: false });
     return;
   }
 
   const jobs = await getJobsByProject(projectId);
-  res.json(jobs);
+  res.json({ jobs: jobs, success: true });
 }

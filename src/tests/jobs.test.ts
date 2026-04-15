@@ -49,6 +49,7 @@ import type { Job } from '#models/jobModel.js';
 
 import { createApp } from '#app.js';
 import { checkFilesExist } from '#controllers/fileController.js';
+import { ProjectFile } from '#models/fileModel.js';
 import { createJob, findJobById, getJobsByProject, updateJobStatus } from '#models/jobModel.js';
 import jwt from 'jsonwebtoken';
 
@@ -108,16 +109,18 @@ describe('Jobs endpoints', () => {
       mockGetJobsByProject.mockResolvedValueOnce([mockJob, mockJob2]);
       const res = await request(app).get('/projects/1/jobs').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(200);
-      expect(res.body).toHaveLength(2);
-      expect((res.body as Job[])[0]).toMatchObject({ id: 1, project_id: 1, status: 'PENDING' });
-      expect((res.body as Job[])[1]).toMatchObject({ id: 2, project_id: 1, status: 'COMPLETED' });
+      expect((res.body as { jobs: Job[]; success: boolean }).success).toBe(true);
+      expect((res.body as { jobs: Job[]; success: boolean }).jobs).toHaveLength(2);
+      expect((res.body as { jobs: Job[]; success: boolean }).jobs[0]).toMatchObject({ id: 1, project_id: 1, status: 'PENDING' });
+      expect((res.body as { jobs: Job[]; success: boolean }).jobs[1]).toMatchObject({ id: 2, project_id: 1, status: 'COMPLETED' });
     });
 
     it('no jobs exist then return empty array and 200 status', async () => {
       mockGetJobsByProject.mockResolvedValueOnce([]);
       const res = await request(app).get('/projects/1/jobs').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(200);
-      expect(res.body).toEqual([]);
+      expect((res.body as { jobs: Job[]; success: boolean }).success).toBe(true);
+      expect((res.body as { jobs: Job[]; success: boolean }).jobs).toEqual([]);
     });
   });
 
@@ -150,17 +153,21 @@ describe('Jobs endpoints', () => {
       expect(res.body).toMatchObject({ message: 'No files selected for the job' });
     });
 
-    it('some files missing without ignore flag then return 400 status', async () => {
+    it('some files missing without ignore flag then return 200 status', async () => {
       mockCheckFilesExist.mockResolvedValueOnce({
-        existing_files: [],
+        existing_files: [{ id: 2, is_missing: false }],
         missing_files: [{ id: 1, is_missing: true }],
       });
       const res = await request(app)
         .post('/projects/1/jobs')
         .set('Cookie', AUTH_COOKIE)
         .send({ fileIds: [1] });
-      expect(res.status).toBe(400);
-      expect(res.body).toMatchObject({ message: 'Some files are missing' });
+      expect(res.status).toBe(200);
+      expect(res.body as { message: string; missing_files: ProjectFile[]; success: boolean }).toMatchObject({
+        message: 'Some files are missing',
+        missing_files: [{ id: 1, is_missing: true }],
+        success: false,
+      });
     });
 
     it('all files missing with ignore flag then return 400 status', async () => {
@@ -171,7 +178,7 @@ describe('Jobs endpoints', () => {
       const res = await request(app)
         .post('/projects/1/jobs')
         .set('Cookie', AUTH_COOKIE)
-        .send({ fileIds: [1], ignore: true });
+        .send({ fileIds: [1], ignoreMissing: true });
       expect(res.status).toBe(400);
       expect(res.body).toMatchObject({ message: 'No files to zip' });
     });
@@ -188,7 +195,8 @@ describe('Jobs endpoints', () => {
         .set('Cookie', AUTH_COOKIE)
         .send({ fileIds: [1] });
       expect(res.status).toBe(202);
-      expect(res.body).toMatchObject({ id: 1, project_id: 1, status: 'PENDING' });
+      expect((res.body as { job: Job; success: boolean }).success).toBe(true);
+      expect((res.body as { job: Job; success: boolean }).job).toMatchObject({ id: 1, project_id: 1, status: 'PENDING' });
       expect(mockCreateJob).toHaveBeenCalledWith(1);
     });
 
@@ -202,9 +210,10 @@ describe('Jobs endpoints', () => {
       const res = await request(app)
         .post('/projects/1/jobs')
         .set('Cookie', AUTH_COOKIE)
-        .send({ fileIds: [1, 2], ignore: true });
+        .send({ fileIds: [1, 2], ignoreMissing: true });
       expect(res.status).toBe(202);
-      expect(res.body).toMatchObject({ id: 1, project_id: 1 });
+      expect((res.body as { job: Job; success: boolean }).success).toBe(true);
+      expect((res.body as { job: Job; success: boolean }).job).toMatchObject({ id: 1, project_id: 1 });
     });
   });
 
@@ -231,7 +240,8 @@ describe('Jobs endpoints', () => {
       mockFindJobById.mockResolvedValueOnce(mockJob);
       const res = await request(app).get('/projects/1/jobs/1').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(200);
-      expect(res.body).toMatchObject({ id: 1, project_id: 1, status: 'PENDING' });
+      expect((res.body as { job: Job; success: boolean }).success).toBe(true);
+      expect((res.body as { job: Job; success: boolean }).job).toMatchObject({ id: 1, project_id: 1, status: 'PENDING' });
     });
   });
 
