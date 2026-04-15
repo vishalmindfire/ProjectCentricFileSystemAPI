@@ -12,12 +12,12 @@ export async function create(req: Request, res: Response): Promise<void> {
   }
 
   const project = await createProject({ description, name });
-  res.status(201).json(project);
+  res.status(201).json({ project: project, success: true });
 }
 
 export async function getAll(_req: Request, res: Response): Promise<void> {
   const projects = await getProjects();
-  res.json(projects);
+  res.json({ projects: projects, success: true });
 }
 
 export async function getById(req: Request, res: Response): Promise<void> {

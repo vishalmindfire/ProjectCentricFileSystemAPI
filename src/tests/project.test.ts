@@ -93,11 +93,14 @@ describe('Projects endpoints', () => {
       const res = await request(app).post('/projects').set('Cookie', AUTH_COOKIE).send({ description: 'Test description', name: 'Test Project' });
       expect(res.status).toBe(201);
       expect(res.body).toMatchObject({
-        description: 'Test description',
-        files_count: 0,
-        id: 1,
-        jobs_count: 0,
-        name: 'Test Project',
+        project: {
+          description: 'Test description',
+          files_count: 0,
+          id: 1,
+          jobs_count: 0,
+          name: 'Test Project',
+        },
+        success: true,
       });
       expect(mockCreateProject).toHaveBeenCalledWith({ description: 'Test description', name: 'Test Project' });
     });
@@ -114,15 +117,16 @@ describe('Projects endpoints', () => {
       mockGetProjects.mockResolvedValueOnce(mockProjects);
       const res = await request(app).get('/projects').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(200);
-      expect(res.body).toHaveLength(2);
-      expect((res.body as Project[])[0]).toMatchObject({
+      expect((res.body as { projects: Project[]; success: boolean }).projects).toHaveLength(2);
+      expect((res.body as { projects: Project[]; success: boolean }).success).toBe(true);
+      expect((res.body as { projects: Project[]; success: boolean }).projects[0]).toMatchObject({
         description: 'Test description',
         files_count: 0,
         id: 1,
         jobs_count: 0,
         name: 'Test Project',
       });
-      expect((res.body as Project[])[1]).toMatchObject({
+      expect((res.body as { projects: Project[]; success: boolean }).projects[1]).toMatchObject({
         description: 'Test description 2',
         files_count: 3,
         id: 2,
@@ -135,7 +139,10 @@ describe('Projects endpoints', () => {
       mockGetProjects.mockResolvedValueOnce([]);
       const res = await request(app).get('/projects').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(200);
-      expect(res.body).toEqual([]);
+      expect(res.body).toEqual({
+        projects: [],
+        success: true,
+      });
     });
   });
 
