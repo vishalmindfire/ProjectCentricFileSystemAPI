@@ -73,19 +73,19 @@ describe('Projects endpoints', () => {
     it('name is missing then reutn 400 status', async () => {
       const res = await request(app).post('/projects').set('Cookie', AUTH_COOKIE).send({ description: 'Test description' });
       expect(res.status).toBe(400);
-      expect(res.body).toMatchObject({ message: 'Name and Description are required' });
+      expect(res.body).toMatchObject({ message: 'Name and Description are required', success: false });
     });
 
     it('description is missing then return 400 status', async () => {
       const res = await request(app).post('/projects').set('Cookie', AUTH_COOKIE).send({ name: 'Test Project' });
       expect(res.status).toBe(400);
-      expect(res.body).toMatchObject({ message: 'Name and Description are required' });
+      expect(res.body).toMatchObject({ message: 'Name and Description are required', success: false });
     });
 
     it('no fileds passed then return 400 status', async () => {
       const res = await request(app).post('/projects').set('Cookie', AUTH_COOKIE).send({});
       expect(res.status).toBe(400);
-      expect(res.body).toMatchObject({ message: 'Name and Description are required' });
+      expect(res.body).toMatchObject({ message: 'Name and Description are required', success: false });
     });
 
     it('creates project and returns 201 with project data', async () => {
@@ -155,21 +155,26 @@ describe('Projects endpoints', () => {
     it('invalid project id then return 400 status', async () => {
       const res = await request(app).get('/projects/abc').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(400);
-      expect(res.body).toMatchObject({ message: 'Invalid project id' });
+      expect(res.body).toMatchObject({ message: 'Invalid project id', success: false });
     });
 
     it('project not found then return 404 status', async () => {
       mockGetProjectById.mockResolvedValueOnce(null);
       const res = await request(app).get('/projects/99').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(404);
-      expect(res.body).toMatchObject({ message: 'Project not found' });
+      expect(res.body).toMatchObject({ message: 'Project not found', success: false });
     });
 
     it('project found then return 200 status', async () => {
       mockGetProjectById.mockResolvedValueOnce(mockProjects[0]);
       const res = await request(app).get('/projects/1').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(200);
-      expect(res.body).toMatchObject({ description: 'Test description', id: 1, name: 'Test Project' });
+      expect((res.body as { project: Project; success: boolean }).success).toBe(true);
+      expect((res.body as { project: Project; success: boolean }).project).toMatchObject({
+        description: 'Test description',
+        id: 1,
+        name: 'Test Project',
+      });
     });
   });
 
@@ -182,14 +187,14 @@ describe('Projects endpoints', () => {
     it('invalid id then return 400 status', async () => {
       const res = await request(app).delete('/projects/abc').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(400);
-      expect(res.body).toMatchObject({ message: 'Invalid project id' });
+      expect(res.body).toMatchObject({ message: 'Invalid project id', success: false });
     });
 
     it('project not found then return returns 404 status', async () => {
       mockDeleteProject.mockResolvedValueOnce(false);
       const res = await request(app).delete('/projects/99').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(404);
-      expect(res.body).toMatchObject({ message: 'Project not found' });
+      expect(res.body).toMatchObject({ message: 'Project not found', success: false });
     });
 
     it('deletes project then returns 204 status', async () => {

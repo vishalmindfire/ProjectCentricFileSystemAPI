@@ -7,7 +7,7 @@ export async function create(req: Request, res: Response): Promise<void> {
   const { description, name } = req.body as CreateProjectInput;
 
   if (!name || !description) {
-    res.status(400).json({ message: 'Name and Description are required' });
+    res.status(400).json({ message: 'Name and Description are required', success: false });
     return;
   }
 
@@ -24,30 +24,30 @@ export async function getById(req: Request, res: Response): Promise<void> {
   const id = Number(req.params.id);
 
   if (isNaN(id)) {
-    res.status(400).json({ message: 'Invalid project id' });
+    res.status(400).json({ message: 'Invalid project id', success: false });
     return;
   }
 
   const project = await getProjectById(id);
   if (!project) {
-    res.status(404).json({ message: 'Project not found' });
+    res.status(404).json({ message: 'Project not found', success: false });
     return;
   }
 
-  res.json(project);
+  res.json({ project: project, success: true });
 }
 
 export async function remove(req: Request, res: Response): Promise<void> {
   const id = Number(req.params.id);
 
   if (isNaN(id)) {
-    res.status(400).json({ message: 'Invalid project id' });
+    res.status(400).json({ message: 'Invalid project id', success: false });
     return;
   }
 
   const deleted = await deleteProject(id);
   if (!deleted) {
-    res.status(404).json({ message: 'Project not found' });
+    res.status(404).json({ message: 'Project not found', success: false });
     return;
   }
 
