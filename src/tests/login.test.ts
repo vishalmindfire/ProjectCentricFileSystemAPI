@@ -18,7 +18,7 @@ jest.mock('jsonwebtoken', () => ({
 jest.mock('#config/dbConnector.js', () => ({ default: {} }));
 
 import { createApp } from '#app.js';
-import { findUserByEmail } from '#models/userModel.js';
+import { findUserByEmail, User } from '#models/userModel.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -83,7 +83,7 @@ describe('POST /auth/login', () => {
     mockJwtSign.mockReturnValueOnce('signed-token' as never);
     const res = await request(app).post('/auth/login').send({ email: 'test@example.com', password: 'correct' });
     expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({
+    expect((res.body as { success: boolean; user: User }).user).toMatchObject({
       email: mockUser.email,
       id: mockUser.id,
       name: mockUser.name,

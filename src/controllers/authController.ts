@@ -13,20 +13,19 @@ export async function login(req: Request, res: Response): Promise<void> {
   const { email, password } = req.body as { email: string; password: string };
 
   if (!email || !password) {
-    res.status(400).json({ message: 'email and password are required' });
+    res.status(400).json({ message: 'email and password are required', success: false });
     return;
   }
 
   const user = await findUserByEmail(email);
-  console.log(user);
   if (!user) {
-    res.status(401).json({ message: 'Invalid credentials' });
+    res.status(401).json({ message: 'Invalid credentials', success: false });
     return;
   }
 
   const valid = await bcrypt.compare(password, user.password_hash);
   if (!valid) {
-    res.status(401).json({ message: 'Invalid credentials' });
+    res.status(401).json({ message: 'Invalid credentials', success: false });
     return;
   }
 
@@ -41,32 +40,32 @@ export async function login(req: Request, res: Response): Promise<void> {
     secure: true,
   });
 
-  res.json({ email: user.email, id: user.id, name: user.name });
+  res.json({ success: true, user: { email: user.email, id: user.id, name: user.name } });
 }
 
 export function logout(_req: Request, res: Response): void {
   res.clearCookie(COOKIE_NAME);
-  res.json({ message: 'Logged out successfully' });
+  res.json({ message: 'Logged out successfully', success: true });
 }
 
 export async function register(req: Request, res: Response): Promise<void> {
   const { email, name, password } = req.body as CreateUserInput & { password: string };
 
   if (!email || !name || !password) {
-    res.status(400).json({ message: 'email, name, and password are required' });
+    res.status(400).json({ message: 'email, name, and password are required', success: false });
     return;
   }
 
   const existing = await findUserByEmail(email);
   if (existing) {
-    res.status(409).json({ message: 'User with this email already exists' });
+    res.status(409).json({ message: 'User with this email already exists', success: false });
     return;
   }
 
   const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
   const user = await createUser({ email, name, password_hash });
 
-  res.status(201).json({ email: user.email, id: user.id, name: user.name });
+  res.status(201).json({ success: true, user: { email: user.email, id: user.id, name: user.name } });
 }
 
 function getJwtSecret(): string {
