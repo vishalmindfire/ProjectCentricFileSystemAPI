@@ -1,7 +1,10 @@
 {
   "extends": "@tsconfig/node22/tsconfig.json",
   "compilerOptions": {
-    "rootDir": "./"
+    "rootDir": "./",
+    "paths": {
+      "#*": ["./src/*"]
+    }
   },
   "include": ["**/*.ts", "/types/express.d.ts"]
 }
