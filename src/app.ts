@@ -27,3 +27,5 @@ export const createApp = (): express.Express => {
 
   return app;
 };
+
+export default createApp();
