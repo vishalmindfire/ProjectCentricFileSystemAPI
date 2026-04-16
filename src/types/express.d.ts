@@ -1,6 +1,7 @@
 declare global {
   namespace Express {
     interface MulterFile {
+      buffer: Buffer;
       destination: string;
       encoding: string;
       fieldname: string;

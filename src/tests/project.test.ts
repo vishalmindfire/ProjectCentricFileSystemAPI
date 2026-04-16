@@ -14,6 +14,17 @@ jest.mock('jsonwebtoken', () => ({
   verify: jest.fn(),
 }));
 jest.mock('#config/dbConnector.js', () => ({ default: {} }));
+jest.mock('#config/gcsClient.js', () => {
+  const mockFile = {
+    delete: jest.fn(() => Promise.resolve()),
+    exists: jest.fn(() => Promise.resolve([true])),
+    save: jest.fn(() => Promise.resolve()),
+  };
+  return {
+    __esModule: true,
+    bucket: { file: jest.fn(() => mockFile) },
+  };
+});
 
 import { createApp } from '#app.js';
 import { createProject, deleteProject, getProjectById, getProjects } from '#models/projectModel.js';

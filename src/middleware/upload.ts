@@ -1,24 +1,5 @@
-import fs from 'fs';
 import multer from 'multer';
-import path from 'path';
 
-const uploadDir = path.join(process.cwd(), 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (_req, file, cb) => {
-    cb(null, file.originalname);
-  },
-});
-
-const upload = multer({
-  limits: { fileSize: 100 * 1024 * 1024 },
-  storage,
-});
+const upload = multer({ storage: multer.memoryStorage() });
 
 export default upload;

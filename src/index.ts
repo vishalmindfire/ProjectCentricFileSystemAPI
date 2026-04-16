@@ -14,7 +14,7 @@ try {
 } catch (error: unknown) {
   console.error('Error connecting to the database:', error);
 }
-if (process.env.NODE_ENV === 'production') {
+if (process.env.NODE_ENV !== 'production') {
   const httpsServer = https.createServer(httpsOptions, app);
   httpsServer.listen(httpsPort, () => {
     console.log(`HTTPS server listening on port ${httpsPort}`);

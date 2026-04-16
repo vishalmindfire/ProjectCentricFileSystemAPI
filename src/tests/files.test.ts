@@ -9,15 +9,22 @@ jest.mock('#models/fileModel.js', () => ({
   findFileById: jest.fn(),
   getFilesByProject: jest.fn(),
 }));
-jest.mock('fs/promises', () => ({
-  access: jest.fn(),
-  unlink: jest.fn(),
-}));
 jest.mock('jsonwebtoken', () => ({
   sign: jest.fn(),
   verify: jest.fn(),
 }));
 jest.mock('#config/dbConnector.js', () => ({ default: {} }));
+jest.mock('#config/gcsClient.js', () => {
+  const mockFile = {
+    delete: jest.fn(() => Promise.resolve()),
+    exists: jest.fn(() => Promise.resolve([true])),
+    save: jest.fn(() => Promise.resolve()),
+  };
+  return {
+    __esModule: true,
+    bucket: { file: jest.fn(() => mockFile) },
+  };
+});
 jest.mock('#middleware/upload.js', () => ({
   __esModule: true,
   default: {
@@ -25,8 +32,8 @@ jest.mock('#middleware/upload.js', () => ({
       const contentType = (req.headers as Record<string, string>)['content-type'] ?? '';
       if (contentType.includes('multipart/form-data')) {
         req.files = [
-          { mimetype: 'text/plain', originalname: 'test.txt', path: '/uploads/test.txt', size: 12 },
-          { mimetype: 'application/pdf', originalname: 'report.pdf', path: '/uploads/report.pdf', size: 204800 },
+          { buffer: Buffer.from('file content'), mimetype: 'text/plain', originalname: 'test.txt', size: 12 },
+          { buffer: Buffer.from('file content'), mimetype: 'application/pdf', originalname: 'report.pdf', size: 204800 },
         ];
       }
       next();
@@ -36,7 +43,6 @@ jest.mock('#middleware/upload.js', () => ({
 
 import { createApp } from '#app.js';
 import { createFile, deleteFile, findFileById, getFilesByProject } from '#models/fileModel.js';
-import fsPromises from 'fs/promises';
 import jwt from 'jsonwebtoken';
 
 const mockCreateFile = createFile as jest.MockedFunction<typeof createFile>;
@@ -44,7 +50,6 @@ const mockDeleteFile = deleteFile as jest.MockedFunction<typeof deleteFile>;
 const mockFindFileById = findFileById as jest.MockedFunction<typeof findFileById>;
 const mockGetFilesByProject = getFilesByProject as jest.MockedFunction<typeof getFilesByProject>;
 const mockJwtVerify = jwt.verify as jest.MockedFunction<typeof jwt.verify>;
-const mockFsUnlink = fsPromises.unlink as jest.MockedFunction<typeof fsPromises.unlink>;
 
 interface ProjectFile {
   created_at: Date;
@@ -186,11 +191,9 @@ describe('Files endpoints', () => {
 
     it('deletes file and returns 204 status', async () => {
       mockFindFileById.mockResolvedValueOnce(mockFile);
-      mockFsUnlink.mockResolvedValueOnce(undefined);
       mockDeleteFile.mockResolvedValueOnce(mockFile);
       const res = await request(app).delete('/projects/1/files/1').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(204);
-      expect(mockFsUnlink).toHaveBeenCalledWith('/uploads/test.txt');
       expect(mockDeleteFile).toHaveBeenCalledWith(1);
     });
   });

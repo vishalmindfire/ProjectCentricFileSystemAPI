@@ -1,7 +1,8 @@
 import type { Request, Response } from 'express';
 
+import { bucket } from '#config/gcsClient.js';
 import { createFile, deleteFile, findFileById, getFilesByProject } from '#models/fileModel.js';
-import fs from 'fs/promises';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface FileDetail {
   created_at?: Date;
@@ -20,8 +21,8 @@ export async function checkFilesExist(fileIds: number[]): Promise<{ existing_fil
       const file = await findFileById(id);
       if (!file) return { id, is_missing: true };
       try {
-        await fs.access(file.storage_path);
-        return { ...file, is_missing: false };
+        const [exists] = await bucket.file(file.storage_path).exists();
+        return { ...file, is_missing: !exists };
       } catch {
         return { id, is_missing: true };
       }
@@ -65,7 +66,7 @@ export async function remove(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  await fs.unlink(file.storage_path);
+  await bucket.file(file.storage_path).delete();
   await deleteFile(id);
   res.status(204).send();
 }
@@ -85,15 +86,20 @@ export async function upload(req: Request, res: Response): Promise<void> {
   }
 
   const created = await Promise.all(
-    files.map((f: Express.MulterFile) =>
-      createFile({
-        mime_type: f.mimetype,
-        name: f.originalname,
+    files.map(async (newFile: Express.MulterFile) => {
+      const filePathName = `files/projects/${projectId.toString()}/${uuidv4()}-${newFile.originalname}`;
+      const bucketFile = bucket.file(filePathName);
+
+      await bucketFile.save(newFile.buffer, { contentType: newFile.mimetype, resumable: false });
+
+      return createFile({
+        mime_type: newFile.mimetype,
+        name: newFile.originalname,
         project_id: projectId,
-        size: f.size,
-        storage_path: f.path,
-      })
-    )
+        size: newFile.size,
+        storage_path: filePathName,
+      });
+    })
   );
 
   res.status(201).json({ files: created, success: true });
