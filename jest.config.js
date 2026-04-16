@@ -1,4 +1,5 @@
 export default {
+  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
   moduleNameMapper: {
     '^#app(\\.js)?$': '<rootDir>/src/app.ts',
     '^#config/(.+?)(\\.js)?$': '<rootDir>/src/config/$1.ts',
