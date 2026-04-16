@@ -18,7 +18,7 @@ const corsOptions: CorsOptions = {
   credentials: true,
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void): void => {
-    console.log(origin);
+    console.log('origin ', origin);
     if (!origin) {
       callback(null, true);
       return;
