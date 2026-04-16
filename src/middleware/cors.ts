@@ -10,8 +10,8 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://www.cpfsystem.com:4173',
   'http://localhost:4173',
-  'https://project-centric-file-system.vercel.app/',
-  'https://project-centric-file-system-api.vercel.app/',
+  'https://project-centric-file-system.vercel.app',
+  'https://project-centric-file-system-api.vercel.app',
 ];
 const corsOptions: CorsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
