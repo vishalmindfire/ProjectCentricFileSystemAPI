@@ -1,13 +1,7 @@
 import type { Express } from 'express';
 
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import fs from 'fs';
-import path from 'path';
 import request from 'supertest';
-
-const ZIPS_DIR = path.resolve(__dirname, 'zips');
-console.log(ZIPS_DIR);
-fs.mkdirSync(ZIPS_DIR, { recursive: true });
 
 jest.mock('#models/jobModel.js', () => ({
   createJob: jest.fn(),
@@ -27,23 +21,24 @@ jest.mock('worker_threads', () => ({
     on: jest.fn(),
   })),
 }));
-jest.mock('fs', () => ({
-  ...jest.requireActual<typeof import('fs')>('fs'),
-  existsSync: jest.fn().mockReturnValue(true),
-}));
 jest.mock('jsonwebtoken', () => ({
   sign: jest.fn(),
   verify: jest.fn(),
 }));
 jest.mock('#config/dbConnector.js', () => ({ default: {} }));
-jest.mock('#middleware/upload.js', () => ({
-  __esModule: true,
-  default: {
-    array: () => (_req: unknown, _res: unknown, next: () => void) => {
-      next();
-    },
-  },
-}));
+jest.mock('#config/gcsClient.js', () => {
+  const { Readable } = jest.requireActual<typeof import('stream')>('stream');
+  const mockFile = {
+    createReadStream: jest.fn(() => Readable.from(['zip content'])),
+    delete: jest.fn(() => Promise.resolve()),
+    exists: jest.fn(() => Promise.resolve([true])),
+    save: jest.fn(() => Promise.resolve()),
+  };
+  return {
+    __esModule: true,
+    bucket: { file: jest.fn(() => mockFile) },
+  };
+});
 
 import type { Job } from '#models/jobModel.js';
 
@@ -272,11 +267,8 @@ describe('Jobs endpoints', () => {
     });
 
     it('job completed and zip exists then return file download', async () => {
-      const zipPath = path.join(ZIPS_DIR, 'job-1-2.zip');
-      fs.writeFileSync(zipPath, 'zip content');
-      mockFindJobById.mockResolvedValueOnce({ ...mockJob2, zip_path: zipPath });
+      mockFindJobById.mockResolvedValueOnce(mockJob2);
       const res = await request(app).get('/projects/1/jobs/2/download').set('Cookie', AUTH_COOKIE);
-      fs.unlinkSync(zipPath);
       expect(res.status).toBe(200);
       expect(res.headers['content-disposition']).toContain('job-1-2.zip');
     });

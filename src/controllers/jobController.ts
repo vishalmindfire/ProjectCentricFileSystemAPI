@@ -1,16 +1,11 @@
 import type { FileDetail } from '#controllers/fileController.js';
 import type { Request, Response } from 'express';
 
+import { bucket } from '#config/gcsClient.js';
 import { checkFilesExist } from '#controllers/fileController.js';
 import { createJob, findJobById, getJobsByProject, updateJobProgress, updateJobStatus } from '#models/jobModel.js';
-import fs from 'fs';
 import path from 'path';
 import { Worker } from 'worker_threads';
-
-const outputDir = path.resolve(process.cwd(), 'zips');
-if (!fs.existsSync(outputDir)) {
-  fs.mkdirSync(outputDir, { recursive: true });
-}
 
 export async function create(req: Request, res: Response): Promise<void> {
   const projectId = Number(req.params.projectId);
@@ -44,15 +39,13 @@ export async function create(req: Request, res: Response): Promise<void> {
   const job = await createJob(projectId);
   await updateJobStatus(job.id, 'PROCESSING');
   const isDev = process.env.NODE_ENV !== 'production';
-  const workerLocation = isDev ? 'src/workers/zipWorker.ts' : 'src/workers/zipWorker.js';
+  const workerLocation = isDev ? 'src/workers/zipWorker.ts' : 'dist/src/workers/zipWorker.js';
   const workerPath = path.resolve(process.cwd(), workerLocation);
-
   const worker = new Worker(workerPath, {
-    execArgv: isDev ? ['--import', 'tsx'] : [],
+    execArgv: isDev ? ['--import', 'tsx', '--conditions', 'development'] : [],
     workerData: {
-      files: existing_files.map((f: FileDetail) => ({ name: f.name, storage_path: f.storage_path })),
+      files: existing_files.map((f: FileDetail) => ({ name: f.name, size: f.size ?? 0, storage_path: f.storage_path })),
       jobId: job.id,
-      outputDir,
       projectId: projectId,
     },
   });
@@ -94,7 +87,9 @@ export async function download(req: Request, res: Response): Promise<void> {
   }
 
   const filename = path.basename(job.zip_path);
-  res.download(job.zip_path, filename);
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.setHeader('Content-Type', 'application/zip');
+  bucket.file(job.zip_path).createReadStream().pipe(res);
 }
 
 export async function getById(req: Request, res: Response): Promise<void> {

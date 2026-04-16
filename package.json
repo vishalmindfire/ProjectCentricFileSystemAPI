@@ -74,6 +74,7 @@
   },
   "imports": {
     "#*": {
+      "development": "./src/*",
       "types": "./src/*",
       "default": "./dist/src/*"
     }

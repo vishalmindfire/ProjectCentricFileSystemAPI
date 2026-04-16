@@ -1,6 +1,5 @@
+import { bucket } from '#config/gcsClient.js';
 import archiver from 'archiver';
-import fs from 'fs';
-import path from 'path';
 import { parentPort, workerData } from 'worker_threads';
 
 interface ProgressMessage {
@@ -17,45 +16,36 @@ interface ResultMessage {
 }
 
 interface WorkerInput {
-  files: { name: string; storage_path: string }[];
+  files: { name: string; size: number; storage_path: string }[];
   jobId: number;
-  outputDir: string;
   projectId: number;
 }
 
-const { files, jobId, outputDir, projectId } = workerData as WorkerInput;
-
-function getTotalBytes(): number {
-  return files.reduce((total, file) => {
-    try {
-      return total + fs.statSync(file.storage_path).size;
-    } catch {
-      return total;
-    }
-  }, 0);
-}
+const { files, jobId, projectId } = workerData as WorkerInput;
 
 async function run(): Promise<void> {
-  const zipPath = path.join(outputDir, `job-${String(projectId)}-${String(jobId)}.zip`);
-  const output = fs.createWriteStream(zipPath);
+  const zipPath = `zips/job-${projectId.toString()}-${jobId.toString()}.zip`;
   const archive = archiver('zip', { zlib: { level: 9 } });
+  const outputStream = bucket.file(zipPath).createWriteStream({ contentType: 'application/zip', resumable: false });
 
-  const bytesTotal = getTotalBytes();
+  const bytesTotal = files.reduce((sum, file) => sum + file.size, 0);
 
-  archive.on('progress', (p) => {
-    const bytesProcessed = p.fs.processedBytes;
+  archive.on('progress', (progressData) => {
+    const bytesProcessed = progressData.fs.processedBytes;
     const percent = bytesTotal > 0 ? Math.min(100, Math.round((bytesProcessed / bytesTotal) * 100)) : 0;
     const msg: ProgressMessage = { bytesProcessed, bytesTotal, percent, type: 'progress' };
     parentPort?.postMessage(msg);
   });
 
   await new Promise<void>((resolve, reject) => {
-    output.on('close', resolve);
+    outputStream.on('finish', resolve);
+    outputStream.on('error', reject);
     archive.on('error', reject);
-    archive.pipe(output);
+    archive.pipe(outputStream);
 
     for (const file of files) {
-      archive.file(file.storage_path, { name: file.name });
+      const readStream = bucket.file(file.storage_path).createReadStream();
+      archive.append(readStream, { name: file.name });
     }
 
     void archive.finalize();
