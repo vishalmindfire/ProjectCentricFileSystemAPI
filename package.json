@@ -7,8 +7,8 @@
     "dev": "tsx --watch --env-file .env.development src/index.ts",
     "dev:staging": "tsx --watch --env-file .env.staging src/index.ts",
     "dev:prod": "tsx --watch --env-file .env.production src/index.ts",
-    "start": "node --env-file .env dist/index.js",
-    "build": "tsc",
+    "start": "node --env-file .env.production dist/src/index.js",
+    "build": "tsc -p tsconfig.prod.json",
     "type-check": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
@@ -71,7 +71,10 @@
     "typescript-eslint": "^8.58.1"
   },
   "imports": {
-    "#*": "./src/*"
+    "#*": {
+      "types": "./src/*",
+      "default": "./dist/src/*"
+    }
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

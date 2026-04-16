@@ -44,7 +44,7 @@ export async function create(req: Request, res: Response): Promise<void> {
   const job = await createJob(projectId);
   await updateJobStatus(job.id, 'PROCESSING');
   const isDev = process.env.NODE_ENV !== 'production';
-  const workerLocation = isDev ? 'src/workers/zipWorker.ts' : 'dist/workers/zipWorker.js';
+  const workerLocation = isDev ? 'src/workers/zipWorker.ts' : 'src/workers/zipWorker.js';
   const workerPath = path.resolve(process.cwd(), workerLocation);
 
   const worker = new Worker(workerPath, {
