@@ -44,7 +44,11 @@ export async function login(req: Request, res: Response): Promise<void> {
 }
 
 export function logout(_req: Request, res: Response): void {
-  res.clearCookie(COOKIE_NAME);
+  res.clearCookie(COOKIE_NAME, {
+    httpOnly: true,
+    sameSite: 'none',
+    secure: true,
+  });
   res.json({ message: 'Logged out successfully', success: true });
 }
 
