@@ -1,4 +1,4 @@
-import { create, download, getById, getByProject } from '#controllers/jobController.js';
+import { create, download, getById, getByProject } from '#config/controllers/jobController.js';
 import { checkAuth } from '#middleware/auth.js';
 import { Router } from 'express';
 

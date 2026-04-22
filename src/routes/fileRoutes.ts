@@ -1,4 +1,4 @@
-import { getByProject, remove, upload } from '#controllers/fileController.js';
+import { getByProject, remove, upload } from '#config/controllers/fileController.js';
 import { checkAuth } from '#middleware/auth.js';
 import uploadMiddleware from '#middleware/upload.js';
 import { Router } from 'express';

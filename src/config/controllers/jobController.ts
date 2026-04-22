@@ -1,8 +1,8 @@
-import type { FileDetail } from '#controllers/fileController.js';
+import type { FileDetail } from '#config/controllers/fileController.js';
 import type { Request, Response } from 'express';
 
+import { checkFilesExist } from '#config/controllers/fileController.js';
 import { bucket } from '#config/gcsClient.js';
-import { checkFilesExist } from '#controllers/fileController.js';
 import { createJob, findJobById, getJobsByProject, updateJobProgress, updateJobStatus } from '#models/jobModel.js';
 import path from 'path';
 import { Worker } from 'worker_threads';
@@ -42,7 +42,7 @@ export async function create(req: Request, res: Response): Promise<void> {
   const workerLocation = isDev ? 'src/workers/zipWorker.ts' : 'dist/src/workers/zipWorker.js';
   const workerPath = path.resolve(process.cwd(), workerLocation);
   const worker = new Worker(workerPath, {
-    execArgv: isDev ? ['--import', 'tsx', '--conditions', 'development'] : [],
+    execArgv: isDev ? ['--import', 'tsx'] : [],
     workerData: {
       files: existing_files.map((f: FileDetail) => ({ name: f.name, size: f.size ?? 0, storage_path: f.storage_path })),
       jobId: job.id,
@@ -54,7 +54,7 @@ export async function create(req: Request, res: Response): Promise<void> {
     if (msg.type === 'progress') {
       void updateJobProgress(job.id, msg.percent ?? 0);
     } else {
-      if (msg.error ?? !msg.zipPath) {
+      if (msg.error || !msg.zipPath) {
         void updateJobStatus(job.id, 'FAILED');
       } else {
         void updateJobStatus(job.id, 'COMPLETED', msg.zipPath);

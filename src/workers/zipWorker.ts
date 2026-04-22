@@ -1,6 +1,16 @@
-import { bucket } from '#config/gcsClient.js';
+import { Storage } from '@google-cloud/storage';
 import archiver from 'archiver';
+import { PassThrough } from 'stream';
 import { parentPort, workerData } from 'worker_threads';
+
+const storage = new Storage({
+  credentials: {
+    client_email: process.env.GCP_CREDENTIALS_CLIENT_EMAIL,
+    private_key: process.env.GCP_CREDENTIALS_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  },
+  projectId: process.env.GCP_CREDENTIALS_PROJECT_ID,
+});
+const bucket = storage.bucket(process.env.GCP_BUCKET_NAME ?? '');
 
 interface ProgressMessage {
   bytesProcessed: number;
@@ -29,13 +39,8 @@ async function run(): Promise<void> {
   const outputStream = bucket.file(zipPath).createWriteStream({ contentType: 'application/zip', resumable: false });
 
   const bytesTotal = files.reduce((sum, file) => sum + file.size, 0);
-
-  archive.on('progress', (progressData) => {
-    const bytesProcessed = progressData.fs.processedBytes;
-    const percent = bytesTotal > 0 ? Math.min(100, Math.round((bytesProcessed / bytesTotal) * 100)) : 0;
-    const msg: ProgressMessage = { bytesProcessed, bytesTotal, percent, type: 'progress' };
-    parentPort?.postMessage(msg);
-  });
+  let bytesProcessed = 0;
+  let lastPercent = -1;
 
   await new Promise<void>((resolve, reject) => {
     outputStream.on('finish', resolve);
@@ -44,11 +49,24 @@ async function run(): Promise<void> {
     archive.pipe(outputStream);
 
     for (const file of files) {
-      const readStream = bucket.file(file.storage_path).createReadStream();
-      archive.append(readStream, { name: file.name });
+      const tracker = new PassThrough();
+      tracker.on('data', (chunk: Buffer) => {
+        bytesProcessed += chunk.length;
+        const percent = bytesTotal > 0 ? Math.min(99, Math.round((bytesProcessed / bytesTotal) * 100)) : 0;
+        if (percent !== lastPercent) {
+          lastPercent = percent;
+          const msg: ProgressMessage = { bytesProcessed, bytesTotal, percent, type: 'progress' };
+          parentPort?.postMessage(msg);
+        }
+      });
+      bucket.file(file.storage_path).createReadStream().pipe(tracker);
+      archive.append(tracker, { name: file.name });
     }
 
     void archive.finalize();
+    void outputStream.on('finish', () => {
+      parentPort?.postMessage({ bytesProcessed, bytesTotal, percent: 100, type: 'progress' } satisfies ProgressMessage);
+    });
   });
 
   const msg: ResultMessage = { type: 'result', zipPath };

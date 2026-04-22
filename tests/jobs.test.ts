@@ -43,7 +43,7 @@ jest.mock('#config/gcsClient.js', () => {
 import type { Job } from '#models/jobModel.js';
 
 import { createApp } from '#app.js';
-import { checkFilesExist } from '#controllers/fileController.js';
+import { checkFilesExist } from '#config/controllers/fileController.js';
 import { ProjectFile } from '#models/fileModel.js';
 import { createJob, findJobById, getJobsByProject, updateJobStatus } from '#models/jobModel.js';
 import jwt from 'jsonwebtoken';

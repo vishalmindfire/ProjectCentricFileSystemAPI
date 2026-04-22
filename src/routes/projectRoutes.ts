@@ -1,4 +1,4 @@
-import { create, getAll, getById, remove } from '#controllers/projectController.js';
+import { create, getAll, getById, remove } from '#config/controllers/projectController.js';
 import { checkAuth } from '#middleware/auth.js';
 import { Router } from 'express';
 
