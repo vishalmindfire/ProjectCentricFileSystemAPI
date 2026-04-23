@@ -12,6 +12,8 @@ const allowedOrigins = [
   'http://localhost:4173',
   'https://project-centric-file-system.vercel.app',
   'https://project-centric-file-system-api.vercel.app',
+  'https://localhost',
+  'https://34.134.13.200',
 ];
 const corsOptions: CorsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],

@@ -93,22 +93,22 @@ describe('Files endpoints', () => {
     app = createApp();
   });
 
-  describe('GET /projects/:projectId/files', () => {
+  describe('GET /api/projects/:projectId/files', () => {
     it('not authenticated then return 401 status', async () => {
-      const res = await request(app).get('/projects/1/files');
+      const res = await request(app).get('/api/projects/1/files');
       expect(res.status).toBe(401);
       expect(res.body).toMatchObject({ message: 'Not authenticated' });
     });
 
     it('invalid project id then return 400 status', async () => {
-      const res = await request(app).get('/projects/abc/files').set('Cookie', AUTH_COOKIE);
+      const res = await request(app).get('/api/projects/abc/files').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(400);
       expect(res.body).toMatchObject({ message: 'Invalid project id', success: false });
     });
 
     it('returns all files for project with 200 status', async () => {
       mockGetFilesByProject.mockResolvedValueOnce([mockFile, mockFile2]);
-      const res = await request(app).get('/projects/1/files').set('Cookie', AUTH_COOKIE);
+      const res = await request(app).get('/api/projects/1/files').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(200);
       expect((res.body as { files: ProjectFile[]; success: boolean }).files).toHaveLength(2);
       expect((res.body as { files: ProjectFile[]; success: boolean }).success).toBe(true);
@@ -118,26 +118,26 @@ describe('Files endpoints', () => {
 
     it('no files exist then return empty array and 200 status', async () => {
       mockGetFilesByProject.mockResolvedValueOnce([]);
-      const res = await request(app).get('/projects/1/files').set('Cookie', AUTH_COOKIE);
+      const res = await request(app).get('/api/projects/1/files').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(200);
       expect(res.body as { files: ProjectFile[]; success: boolean }).toEqual({ files: [], success: true });
     });
   });
 
-  describe('POST /projects/:projectId/files', () => {
+  describe('POST /api/projects/:projectId/files', () => {
     it('not authenticated then return 401 status', async () => {
-      const res = await request(app).post('/projects/1/files');
+      const res = await request(app).post('/api/projects/1/files');
       expect(res.status).toBe(401);
     });
 
     it('invalid project id then return 400 status', async () => {
-      const res = await request(app).post('/projects/abc/files').set('Cookie', AUTH_COOKIE);
+      const res = await request(app).post('/api/projects/abc/files').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(400);
       expect(res.body).toMatchObject({ message: 'Invalid project id', success: false });
     });
 
     it('no files provided then return 400 status', async () => {
-      const res = await request(app).post('/projects/1/files').set('Cookie', AUTH_COOKIE).send({});
+      const res = await request(app).post('/api/projects/1/files').set('Cookie', AUTH_COOKIE).send({});
       expect(res.status).toBe(400);
       expect(res.body).toMatchObject({ message: 'No files provided', success: false });
     });
@@ -145,7 +145,7 @@ describe('Files endpoints', () => {
     it('uploads files and returns 201 with created file data', async () => {
       mockCreateFile.mockResolvedValueOnce(mockFile).mockResolvedValueOnce(mockFile2);
       const res = await request(app)
-        .post('/projects/1/files')
+        .post('/api/projects/1/files')
         .set('Cookie', AUTH_COOKIE)
         .attach('files', Buffer.from('file content'), { contentType: 'text/plain', filename: 'test.txt' })
         .attach('files', Buffer.from('file content'), { contentType: 'application/pdf', filename: 'report.pdf' });
@@ -157,34 +157,34 @@ describe('Files endpoints', () => {
     });
   });
 
-  describe('DELETE /projects/:projectId/files/:id', () => {
+  describe('DELETE /api/projects/:projectId/files/:id', () => {
     it('not authenticated then return 401 status', async () => {
-      const res = await request(app).delete('/projects/1/files/1');
+      const res = await request(app).delete('/api/projects/1/files/1');
       expect(res.status).toBe(401);
     });
 
     it('invalid project id then return 400 status', async () => {
-      const res = await request(app).delete('/projects/abc/files/1').set('Cookie', AUTH_COOKIE);
+      const res = await request(app).delete('/api/projects/abc/files/1').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(400);
       expect(res.body).toMatchObject({ message: 'Invalid project id', success: false });
     });
 
     it('invalid file id then return 400 status', async () => {
-      const res = await request(app).delete('/projects/1/files/abc').set('Cookie', AUTH_COOKIE);
+      const res = await request(app).delete('/api/projects/1/files/abc').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(400);
       expect(res.body).toMatchObject({ message: 'Invalid file id', success: false });
     });
 
     it('file not found then return 404 status', async () => {
       mockFindFileById.mockResolvedValueOnce(null);
-      const res = await request(app).delete('/projects/1/files/99').set('Cookie', AUTH_COOKIE);
+      const res = await request(app).delete('/api/projects/1/files/99').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(404);
       expect(res.body).toMatchObject({ message: 'File not found', success: false });
     });
 
     it('file belongs to different project then return 404 status', async () => {
       mockFindFileById.mockResolvedValueOnce({ ...mockFile, project_id: 2 });
-      const res = await request(app).delete('/projects/1/files/1').set('Cookie', AUTH_COOKIE);
+      const res = await request(app).delete('/api/projects/1/files/1').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(404);
       expect(res.body).toMatchObject({ message: 'File is not accessible', success: false });
     });
@@ -192,7 +192,7 @@ describe('Files endpoints', () => {
     it('deletes file and returns 204 status', async () => {
       mockFindFileById.mockResolvedValueOnce(mockFile);
       mockDeleteFile.mockResolvedValueOnce(mockFile);
-      const res = await request(app).delete('/projects/1/files/1').set('Cookie', AUTH_COOKIE);
+      const res = await request(app).delete('/api/projects/1/files/1').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(204);
       expect(mockDeleteFile).toHaveBeenCalledWith(1);
     });
