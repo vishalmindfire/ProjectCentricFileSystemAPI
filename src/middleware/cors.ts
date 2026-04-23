@@ -18,7 +18,7 @@ const allowedOrigins = [
 const corsOptions: CorsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void): void => {
     console.log('origin ', origin);
     if (!origin) {
