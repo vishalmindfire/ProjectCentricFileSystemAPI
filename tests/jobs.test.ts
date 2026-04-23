@@ -87,22 +87,22 @@ describe('Jobs endpoints', () => {
     app = createApp();
   });
 
-  describe('GET /projects/:projectId/jobs', () => {
+  describe('GET /api/projects/:projectId/jobs', () => {
     it('not authenticated then return 401 status', async () => {
-      const res = await request(app).get('/projects/1/jobs');
+      const res = await request(app).get('/api/projects/1/jobs');
       expect(res.status).toBe(401);
       expect(res.body).toMatchObject({ message: 'Not authenticated' });
     });
 
     it('invalid project id then return 400 status', async () => {
-      const res = await request(app).get('/projects/abc/jobs').set('Cookie', AUTH_COOKIE);
+      const res = await request(app).get('/api/projects/abc/jobs').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(400);
       expect(res.body).toMatchObject({ message: 'Invalid project id' });
     });
 
     it('returns all jobs for project with 200 status', async () => {
       mockGetJobsByProject.mockResolvedValueOnce([mockJob, mockJob2]);
-      const res = await request(app).get('/projects/1/jobs').set('Cookie', AUTH_COOKIE);
+      const res = await request(app).get('/api/projects/1/jobs').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(200);
       expect((res.body as { jobs: Job[]; success: boolean }).success).toBe(true);
       expect((res.body as { jobs: Job[]; success: boolean }).jobs).toHaveLength(2);
@@ -112,24 +112,24 @@ describe('Jobs endpoints', () => {
 
     it('no jobs exist then return empty array and 200 status', async () => {
       mockGetJobsByProject.mockResolvedValueOnce([]);
-      const res = await request(app).get('/projects/1/jobs').set('Cookie', AUTH_COOKIE);
+      const res = await request(app).get('/api/projects/1/jobs').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(200);
       expect((res.body as { jobs: Job[]; success: boolean }).success).toBe(true);
       expect((res.body as { jobs: Job[]; success: boolean }).jobs).toEqual([]);
     });
   });
 
-  describe('POST /projects/:projectId/jobs', () => {
+  describe('POST /api/projects/:projectId/jobs', () => {
     it('not authenticated then return 401 status', async () => {
       const res = await request(app)
-        .post('/projects/1/jobs')
+        .post('/api/projects/1/jobs')
         .send({ fileIds: [1] });
       expect(res.status).toBe(401);
     });
 
     it('invalid project id then return 400 status', async () => {
       const res = await request(app)
-        .post('/projects/abc/jobs')
+        .post('/api/projects/abc/jobs')
         .set('Cookie', AUTH_COOKIE)
         .send({ fileIds: [1] });
       expect(res.status).toBe(400);
@@ -137,13 +137,13 @@ describe('Jobs endpoints', () => {
     });
 
     it('no fileIds provided then return 400 status', async () => {
-      const res = await request(app).post('/projects/1/jobs').set('Cookie', AUTH_COOKIE).send({});
+      const res = await request(app).post('/api/projects/1/jobs').set('Cookie', AUTH_COOKIE).send({});
       expect(res.status).toBe(400);
       expect(res.body).toMatchObject({ message: 'No files selected for the job' });
     });
 
     it('empty fileIds array then return 400 status', async () => {
-      const res = await request(app).post('/projects/1/jobs').set('Cookie', AUTH_COOKIE).send({ fileIds: [] });
+      const res = await request(app).post('/api/projects/1/jobs').set('Cookie', AUTH_COOKIE).send({ fileIds: [] });
       expect(res.status).toBe(400);
       expect(res.body).toMatchObject({ message: 'No files selected for the job' });
     });
@@ -154,7 +154,7 @@ describe('Jobs endpoints', () => {
         missing_files: [{ id: 1, is_missing: true }],
       });
       const res = await request(app)
-        .post('/projects/1/jobs')
+        .post('/api/projects/1/jobs')
         .set('Cookie', AUTH_COOKIE)
         .send({ fileIds: [1] });
       expect(res.status).toBe(200);
@@ -171,7 +171,7 @@ describe('Jobs endpoints', () => {
         missing_files: [{ id: 1, is_missing: true }],
       });
       const res = await request(app)
-        .post('/projects/1/jobs')
+        .post('/api/projects/1/jobs')
         .set('Cookie', AUTH_COOKIE)
         .send({ fileIds: [1], ignoreMissing: true });
       expect(res.status).toBe(400);
@@ -186,7 +186,7 @@ describe('Jobs endpoints', () => {
       mockCreateJob.mockResolvedValueOnce(mockJob);
       mockUpdateJobStatus.mockResolvedValueOnce({ ...mockJob, status: 'PROCESSING' });
       const res = await request(app)
-        .post('/projects/1/jobs')
+        .post('/api/projects/1/jobs')
         .set('Cookie', AUTH_COOKIE)
         .send({ fileIds: [1] });
       expect(res.status).toBe(202);
@@ -203,7 +203,7 @@ describe('Jobs endpoints', () => {
       mockCreateJob.mockResolvedValueOnce(mockJob);
       mockUpdateJobStatus.mockResolvedValueOnce({ ...mockJob, status: 'PROCESSING' });
       const res = await request(app)
-        .post('/projects/1/jobs')
+        .post('/api/projects/1/jobs')
         .set('Cookie', AUTH_COOKIE)
         .send({ fileIds: [1, 2], ignoreMissing: true });
       expect(res.status).toBe(202);
@@ -212,63 +212,63 @@ describe('Jobs endpoints', () => {
     });
   });
 
-  describe('GET /projects/:projectId/jobs/:id', () => {
+  describe('GET /api/projects/:projectId/jobs/:id', () => {
     it('not authenticated then return 401 status', async () => {
-      const res = await request(app).get('/projects/1/jobs/1');
+      const res = await request(app).get('/api/projects/1/jobs/1');
       expect(res.status).toBe(401);
     });
 
     it('invalid job id then return 400 status', async () => {
-      const res = await request(app).get('/projects/1/jobs/abc').set('Cookie', AUTH_COOKIE);
+      const res = await request(app).get('/api/projects/1/jobs/abc').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(400);
       expect(res.body).toMatchObject({ message: 'Invalid job id' });
     });
 
     it('job not found then return 404 status', async () => {
       mockFindJobById.mockResolvedValueOnce(null);
-      const res = await request(app).get('/projects/1/jobs/99').set('Cookie', AUTH_COOKIE);
+      const res = await request(app).get('/api/projects/1/jobs/99').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(404);
       expect(res.body).toMatchObject({ message: 'Job not found' });
     });
 
     it('job found then return 200 status with job data', async () => {
       mockFindJobById.mockResolvedValueOnce(mockJob);
-      const res = await request(app).get('/projects/1/jobs/1').set('Cookie', AUTH_COOKIE);
+      const res = await request(app).get('/api/projects/1/jobs/1').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(200);
       expect((res.body as { job: Job; success: boolean }).success).toBe(true);
       expect((res.body as { job: Job; success: boolean }).job).toMatchObject({ id: 1, project_id: 1, status: 'PENDING' });
     });
   });
 
-  describe('GET /projects/:projectId/jobs/:id/download', () => {
+  describe('GET /api/projects/:projectId/jobs/:id/download', () => {
     it('not authenticated then return 401 status', async () => {
-      const res = await request(app).get('/projects/1/jobs/1/download');
+      const res = await request(app).get('/api/projects/1/jobs/1/download');
       expect(res.status).toBe(401);
     });
 
     it('invalid job id then return 400 status', async () => {
-      const res = await request(app).get('/projects/1/jobs/abc/download').set('Cookie', AUTH_COOKIE);
+      const res = await request(app).get('/api/projects/1/jobs/abc/download').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(400);
       expect(res.body).toMatchObject({ message: 'Invalid job id' });
     });
 
     it('job not found then return 404 status', async () => {
       mockFindJobById.mockResolvedValueOnce(null);
-      const res = await request(app).get('/projects/1/jobs/99/download').set('Cookie', AUTH_COOKIE);
+      const res = await request(app).get('/api/projects/1/jobs/99/download').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(404);
       expect(res.body).toMatchObject({ message: 'Job not found' });
     });
 
     it('job not completed then return 400 status', async () => {
       mockFindJobById.mockResolvedValueOnce(mockJob);
-      const res = await request(app).get('/projects/1/jobs/1/download').set('Cookie', AUTH_COOKIE);
+      const res = await request(app).get('/api/projects/1/jobs/1/download').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(400);
       expect(res.body).toMatchObject({ message: 'Job is not completed yet' });
     });
 
     it('job completed and zip exists then return file download', async () => {
       mockFindJobById.mockResolvedValueOnce(mockJob2);
-      const res = await request(app).get('/projects/1/jobs/2/download').set('Cookie', AUTH_COOKIE);
+      const res = await request(app).get('/api/projects/1/jobs/2/download').set('Cookie', AUTH_COOKIE);
       expect(res.status).toBe(200);
       expect(res.headers['content-disposition']).toContain('job-1-2.zip');
     });

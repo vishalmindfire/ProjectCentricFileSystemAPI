@@ -8,15 +8,15 @@ import express from 'express';
 
 export const createApp = (): express.Express => {
   const app = express();
-
+  app.set('trust proxy', true);
   app.use(corsMiddleware);
   app.use(cookieParser());
   app.use(express.json());
 
-  app.use('/auth', authRoutes);
-  app.use('/projects', projectRoutes);
-  app.use('/projects/:projectId/files', fileRoutes);
-  app.use('/projects/:projectId/jobs', jobRoutes);
+  app.use('/api/auth', authRoutes);
+  app.use('/api/projects', projectRoutes);
+  app.use('/api/projects/:projectId/files', fileRoutes);
+  app.use('/api/projects/:projectId/jobs', jobRoutes);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

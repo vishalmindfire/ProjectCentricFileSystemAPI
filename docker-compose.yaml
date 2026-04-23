@@ -1,9 +1,9 @@
 services:
-  app:
+  nodeapp:
     build:
       context: .
       dockerfile: Dockerfile.prod
-    image: vishalmindfiresolutions/node_api:1.0
+    image: vishalmindfiresolutions/node_api:1.1
     restart: unless-stopped
     container_name: nodejs-app-container
     env_file:
