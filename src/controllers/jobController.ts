@@ -1,8 +1,8 @@
-import type { FileDetail } from '#config/controllers/fileController.js';
+import type { FileDetail } from '#controllers/fileController.js';
 import type { Request, Response } from 'express';
 
-import { checkFilesExist } from '#config/controllers/fileController.js';
 import { bucket } from '#config/gcsClient.js';
+import { checkFilesExist } from '#controllers/fileController.js';
 import { createJob, findJobById, getJobsByProject, updateJobProgress, updateJobStatus } from '#models/jobModel.js';
 import path from 'path';
 import { Worker } from 'worker_threads';

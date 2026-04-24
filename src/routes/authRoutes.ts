@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 
-import { login, logout, register } from '#config/controllers/authController.js';
+import { login, logout, register } from '#controllers/authController.js';
 import { checkAuth } from '#middleware/auth.js';
 import { Router } from 'express';
 
